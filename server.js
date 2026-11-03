@@ -20,6 +20,10 @@ io.on("connection", (socket) => {
     socket.join(room);
     console.log(socket.id + " joined " + room);
   });
+  
+  socket.on("send-message", (data) => {
+    io.to(data.room).emit("receive-message", data.message);
+   });
 });
 
 
