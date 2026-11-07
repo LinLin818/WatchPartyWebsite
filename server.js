@@ -11,7 +11,12 @@ const port = 3000;
 const hostname = "localhost";
 
 app.use(express.static("public"));
+const rooms = {}
+function getRoom(name){
+  rooms[name] = {queue: [], current: null };
+  return rooms[name]
 
+}
 
 io.on("connection", (socket) => {
   console.log("socket server on ong");
