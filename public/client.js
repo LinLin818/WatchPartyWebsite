@@ -19,8 +19,7 @@ function extractVideoId(input) {
     return /^[\w-]{11}$/.test(input) ? input : null;
 }
 
- 
-function loadVideo(id) {
+ function loadVideo(id) {
     currentVideo = id;
     if (!player || !player.loadVideoById) {
         pendingVideo = id; // player not ready yet
@@ -33,21 +32,50 @@ function loadVideo(id) {
     }
 }
 
+window.onYouTubeIframeAPIReady = () => {
+    player = new YT.Player("player", {
+        height: "390",
+        width: "640",
+        events: {
+            onReady: () => {
+                if (pendingVideo !== undefined) loadVideo(pendingVideo);
+            },
+            onStateChange: (e) => {
+                // Video finished -> ask the server for the next one
+                if (e.data === YT.PlayerState.ENDED && currentVideo) {
+                    socket.emit("next-video", { room: currentRoom, from: currentVideo });
+                }
+            }
+        }
+    });
+};
+
+
+
+ 
 
 document.getElementById("join").onclick = () => {
     const room = document.getElementById("room").value.trim();
     if (!room) return;
     currentRoom = room;
     socket.emit("join-room", room);
+
+    const messageBox = document.getElementById("message");
+    messageBox.disabled = false;
+    messageBox.placeholder = "Paste a YouTube link to broadcast";
+    document.getElementById("send").disabled = false;
 };
  
-document.getElementById("send").onclick = () => {
-    const message = document.getElementById("message").value;
-    if (!currentRoom || !message) return;
-    socket.emit("send-message", {
-        room: currentRoom,
-        message: message
-    });
+    document.getElementById("send").onclick = () => {
+    const box = document.getElementById("message");
+    const id = extractVideoId(box.value);
+    if (!currentRoom) return;
+    if (!id) return alert("Enter a valid YouTube link");
+    // Play this video now for everyone in the room
+    socket.emit("broadcast-video", { room: currentRoom, video: id });
+    box.value = "";
+
+
 };
 
 
@@ -56,4 +84,34 @@ socket.on("receive-message", (message) => {
     li.textContent = message;
     document.getElementById("messages").appendChild(li);
 });
+ // Sends action the server side
+document.getElementById("add-video").onclick = () => {
+    const input = document.getElementById("video-url");
+    const id = extractVideoId(input.value);
+    if (!currentRoom) return alert("Join a room first");
+    if (!id) return alert("Enter a valid YouTube link");
+    socket.emit("add-to-queue", { room: currentRoom, video: id });
+    input.value = "";
+};
  
+document.getElementById("skip").onclick = () => {
+    if (!currentRoom) return;
+    socket.emit("next-video", { room: currentRoom });
+};
+ 
+socket.on("play-video", (id) => {
+    loadVideo(id);
+});
+ 
+socket.on("queue-updated", ({ current, queue }) => {
+    document.getElementById("now-playing").textContent =
+        current ? "Now playing: " + current : "Nothing playing";
+ 
+    const list = document.getElementById("queue");
+    list.innerHTML = "";
+    queue.forEach((id) => {
+        const li = document.createElement("li");
+        li.textContent = id;
+        list.appendChild(li);
+    });
+});

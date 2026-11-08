@@ -4,23 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watch Party Website</title>
-    <link rel = "stylesheet"href = "style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <input type = "text" placeholder="Search..">
+    <input type="text" placeholder="Search..">
 
-<h2>Join a Room</h2>
-<input id="room" placeholder="Enter room name">
-<button id="join">Join Room</button>
+    <h2>Join a Room</h2>
+    <input id="room" placeholder="Enter room name">
+    <button id="join">Join Room</button>
 
-<h2>Being Broadcasted</h2>
+    <h2>Being Broadcasted</h2>
+    <div id="player"></div>
+    <p id="now-playing">Nothing playing</p>
 
-<input id="message" placeholder="Enter message">
-<button id="send">Send Message</button>
- <ul id="messages"></ul>
+    <input id="video-url" placeholder="Paste a YouTube link">
+    <button id="add-video">Add to Queue</button>
+    <button id="skip">Next Video</button>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src = "client.js"></script>
+    <h3>Up Next</h3>
+    <ul id="queue"></ul>
 
+    <h2>Chat</h2>
+    <input id="message" placeholder="Join a room to broadcast" disabled>
+    <button id="send" disabled>Send Message (plays for everyone)</button>
+    <ul id="messages"></ul>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="client.js"></script>
 </body>
 </html>
