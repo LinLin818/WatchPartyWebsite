@@ -1,10 +1,11 @@
 const socket = io();
 
 let currentRoom = "";
-let currentVideo = null;  
-let pendingVideo;  
+let currentVideo = null;   // YouTube video ID that is playing now
+let player = null;         // YouTube player instance
+let pendingVideo;          // video to load once the player is ready
 
-//Extrall URL 
+// ---------- Helpers ----------
 function extractVideoId(input) {
     input = input.trim();
     try {
@@ -19,7 +20,7 @@ function extractVideoId(input) {
     return /^[\w-]{11}$/.test(input) ? input : null;
 }
 
- function loadVideo(id) {
+function loadVideo(id) {
     currentVideo = id;
     if (!player || !player.loadVideoById) {
         pendingVideo = id; // player not ready yet
@@ -32,6 +33,7 @@ function extractVideoId(input) {
     }
 }
 
+// ---------- YouTube player ----------
 window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player("player", {
         height: "390",
@@ -50,41 +52,35 @@ window.onYouTubeIframeAPIReady = () => {
     });
 };
 
-
-
- 
-
+// ---------- Rooms & chat ----------
 document.getElementById("join").onclick = () => {
     const room = document.getElementById("room").value.trim();
     if (!room) return;
     currentRoom = room;
     socket.emit("join-room", room);
 
+    // Joined: unlock chat
     const messageBox = document.getElementById("message");
     messageBox.disabled = false;
-    messageBox.placeholder = "Paste a YouTube link to broadcast";
+    messageBox.placeholder = "Enter message";
     document.getElementById("send").disabled = false;
 };
- 
-    document.getElementById("send").onclick = () => {
+
+// Chat: send a text message to everyone in the room
+document.getElementById("send").onclick = () => {
     const box = document.getElementById("message");
-    const id = extractVideoId(box.value);
-    if (!currentRoom) return;
-    if (!id) return alert("Enter a valid YouTube link");
-    // Play this video now for everyone in the room
-    socket.emit("broadcast-video", { room: currentRoom, video: id });
+    if (!currentRoom || !box.value) return;
+    socket.emit("send-message", { room: currentRoom, message: box.value });
     box.value = "";
-
-
 };
-
 
 socket.on("receive-message", (message) => {
     const li = document.createElement("li");
     li.textContent = message;
     document.getElementById("messages").appendChild(li);
 });
- // Sends action the server side
+
+// ---------- Queue ----------
 document.getElementById("add-video").onclick = () => {
     const input = document.getElementById("video-url");
     const id = extractVideoId(input.value);
@@ -93,20 +89,30 @@ document.getElementById("add-video").onclick = () => {
     socket.emit("add-to-queue", { room: currentRoom, video: id });
     input.value = "";
 };
- 
+
+// Play the pasted video right now for everyone in the room
+document.getElementById("play-now").onclick = () => {
+    const input = document.getElementById("video-url");
+    const id = extractVideoId(input.value);
+    if (!currentRoom) return alert("Join a room first");
+    if (!id) return alert("Enter a valid YouTube link");
+    socket.emit("broadcast-video", { room: currentRoom, video: id });
+    input.value = "";
+};
+
 document.getElementById("skip").onclick = () => {
     if (!currentRoom) return;
     socket.emit("next-video", { room: currentRoom });
 };
- 
+
 socket.on("play-video", (id) => {
     loadVideo(id);
 });
- 
+
 socket.on("queue-updated", ({ current, queue }) => {
     document.getElementById("now-playing").textContent =
         current ? "Now playing: " + current : "Nothing playing";
- 
+
     const list = document.getElementById("queue");
     list.innerHTML = "";
     queue.forEach((id) => {
