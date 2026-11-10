@@ -1,0 +1,674 @@
+/* =========================================================
+   COLORS
+   ========================================================= */
+
+:root {
+    --charcoal: #313131;
+    --orange: #e3864c;
+    --green: #a7c872;
+    --blue: #4575a9;
+    --cream: #eaf2de;
+    --white: #ffffff;
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+
+    width: 100%;
+    min-height: 100%;
+
+    background: var(--cream);
+
+    color: var(--charcoal);
+
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+
+/* =========================================================
+   HEADER / JOIN ROOM
+   ========================================================= */
+
+.room-header {
+    min-height: 100px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 20px;
+
+    padding: 20px 40px;
+
+    background: var(--cream);
+
+    border-bottom: 2px solid var(--green);
+}
+
+
+/* If you're still using site-title */
+
+.site-title {
+    color: var(--charcoal);
+
+    font-size: 26px;
+    font-weight: bold;
+}
+
+
+.join-room {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+}
+
+
+#room {
+    width: 230px;
+
+    padding: 12px 14px;
+
+    background: var(--white);
+
+    border: 1px solid var(--blue);
+    border-radius: 6px;
+}
+
+
+#join {
+    padding: 12px 20px;
+
+    background: var(--orange);
+    color: var(--white);
+
+    border: none;
+    border-radius: 6px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+}
+
+
+#join:hover {
+    background: var(--blue);
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+   ========================================================= */
+
+.room-layout {
+    display: grid;
+
+    /*
+       Video takes most of screen.
+       Chat gets dedicated right column.
+    */
+
+    grid-template-columns: minmax(0, 1fr) 360px;
+
+    width: 100%;
+
+    min-height: calc(100vh - 100px);
+}
+
+
+/* =========================================================
+   VIDEO SECTION
+   ========================================================= */
+
+.video-section {
+    min-width: 0;
+
+    padding: 35px 45px 60px;
+}
+
+
+/* =========================================================
+   HEADING
+   ========================================================= */
+
+.section-heading {
+    width: 100%;
+
+    margin: 0 0 20px;
+}
+
+
+.section-heading h2 {
+    margin: 0 0 8px;
+
+    font-size: 26px;
+}
+
+
+#now-playing {
+    margin: 8px 0 0;
+
+    color: var(--blue);
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   PLAYER CONTAINER
+   ========================================================= */
+
+.player-container {
+    width: 100%;
+
+    /*
+       IMPORTANT:
+
+       Do NOT set height here.
+       The iframe itself gets the height below.
+    */
+
+    background: #000;
+
+    border: 3px solid var(--blue);
+    border-radius: 14px;
+
+    overflow: hidden;
+
+    box-shadow: 0 8px 20px rgba(49, 49, 49, 0.12);
+}
+
+
+/* =========================================================
+   YOUTUBE PLAYER
+
+   The YouTube API turns:
+
+       <div id="player"></div>
+
+   into:
+
+       <iframe id="player"></iframe>
+
+   So we size #player ITSELF.
+   ========================================================= */
+
+#player {
+    display: block !important;
+
+    width: 100% !important;
+
+    /*
+       THIS is what actually makes the
+       generated YouTube player tall.
+    */
+
+    height: 600px !important;
+
+    min-height: 600px !important;
+
+    max-height: none !important;
+
+    margin: 0 !important;
+
+    padding: 0 !important;
+
+    border: 0 !important;
+}
+
+
+/*
+   Extra specificity once YouTube has
+   converted #player into an iframe.
+*/
+
+iframe#player {
+    display: block !important;
+
+    width: 100% !important;
+
+    height: 600px !important;
+    min-height: 600px !important;
+
+    max-height: none !important;
+
+    border: 0 !important;
+}
+
+
+/* =========================================================
+   VIDEO CONTROLS
+   ========================================================= */
+
+.video-actions {
+    width: 100%;
+
+    margin-top: 20px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    padding: 16px;
+
+    background: rgba(255, 255, 255, 0.55);
+
+    border: 1px solid rgba(69, 117, 169, 0.25);
+    border-radius: 10px;
+}
+
+
+#video-url {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 12px 14px;
+
+    background: var(--white);
+
+    border: 1px solid rgba(69, 117, 169, 0.5);
+    border-radius: 6px;
+}
+
+
+/* =========================================================
+   VIDEO BUTTONS
+   ========================================================= */
+
+#play-now,
+#add-video,
+#skip {
+    flex-shrink: 0;
+
+    padding: 12px 18px;
+
+    border: none;
+    border-radius: 6px;
+
+    font-weight: bold;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+
+#play-now {
+    background: var(--orange);
+    color: var(--white);
+}
+
+
+#add-video {
+    background: var(--blue);
+    color: var(--white);
+}
+
+
+#skip {
+    background: var(--green);
+    color: var(--charcoal);
+}
+
+
+#play-now:hover {
+    background: var(--blue);
+}
+
+
+#add-video:hover {
+    background: var(--orange);
+}
+
+
+#skip:hover {
+    background: var(--orange);
+    color: var(--white);
+}
+
+
+/* =========================================================
+   QUEUE
+   ========================================================= */
+
+.queue-section {
+    width: 100%;
+
+    min-height: 110px;
+
+    margin-top: 35px;
+
+    padding: 25px;
+
+    background: rgba(255, 255, 255, 0.45);
+
+    border-left: 4px solid var(--orange);
+    border-radius: 8px;
+}
+
+
+.queue-section h3 {
+    margin: 0 0 18px;
+
+    color: var(--blue);
+
+    font-size: 19px;
+}
+
+
+#queue {
+    margin: 0;
+    padding: 0;
+
+    list-style: none;
+}
+
+
+#queue li {
+    margin-bottom: 8px;
+
+    padding: 12px 14px;
+
+    background: var(--white);
+
+    border: 1px solid rgba(69, 117, 169, 0.15);
+    border-radius: 6px;
+}
+
+
+/* =========================================================
+   CHAT SIDEBAR
+   ========================================================= */
+
+.chat-sidebar {
+    height: calc(100vh - 100px);
+
+    display: flex;
+    flex-direction: column;
+
+    background: rgba(255, 255, 255, 0.55);
+
+    border-left: 2px solid var(--blue);
+
+    overflow: hidden;
+
+    position: sticky;
+    top: 0;
+}
+
+
+/* =========================================================
+   CHAT HEADER
+   ========================================================= */
+
+.chat-header {
+    flex-shrink: 0;
+
+    height: 70px;
+
+    display: flex;
+    align-items: center;
+
+    padding: 0 22px;
+
+    border-bottom: 1px solid rgba(69, 117, 169, 0.25);
+}
+
+
+.chat-header h2 {
+    margin: 0;
+
+    color: var(--blue);
+
+    font-size: 19px;
+}
+
+
+/* =========================================================
+   CHAT MESSAGES
+   ========================================================= */
+
+#messages {
+    flex: 1;
+
+    min-height: 0;
+
+    width: 100%;
+
+    margin: 0;
+    padding: 20px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    list-style: none;
+}
+
+
+#messages li {
+    align-self: flex-start;
+
+    flex-shrink: 0;
+
+    width: auto;
+    max-width: 85%;
+
+    margin: 0;
+
+    padding: 10px 14px;
+
+    background: var(--white);
+    color: var(--charcoal);
+
+    border: 1px solid rgba(69, 117, 169, 0.15);
+    border-radius: 4px 12px 12px 12px;
+
+    line-height: 1.4;
+
+    overflow-wrap: anywhere;
+}
+
+
+#messages li:nth-child(even) {
+    border-left: 3px solid var(--green);
+}
+
+
+/* =========================================================
+   CHAT INPUT
+   ========================================================= */
+
+.chat-input-container {
+    flex-shrink: 0;
+
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 16px;
+
+    background: var(--cream);
+
+    border-top: 1px solid rgba(69, 117, 169, 0.25);
+}
+
+
+#message {
+    flex: 1;
+
+    min-width: 0;
+
+    padding: 12px 14px;
+
+    background: var(--white);
+
+    border: 1px solid var(--blue);
+    border-radius: 6px;
+}
+
+
+#send {
+    flex-shrink: 0;
+
+    padding: 12px 16px;
+
+    background: var(--orange);
+    color: var(--white);
+
+    border: none;
+    border-radius: 6px;
+
+    font-weight: bold;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+
+#send:hover:not(:disabled) {
+    background: var(--blue);
+}
+
+
+#send:disabled,
+#message:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .room-layout {
+        grid-template-columns: minmax(0, 1fr) 320px;
+    }
+
+
+    .video-section {
+        padding: 30px;
+    }
+
+
+    #player,
+    iframe#player {
+        height: 500px !important;
+        min-height: 500px !important;
+    }
+
+
+    .video-actions {
+        flex-wrap: wrap;
+    }
+
+
+    #video-url {
+        flex-basis: 100%;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 750px) {
+
+    .room-header {
+        flex-direction: column;
+
+        align-items: stretch;
+
+        gap: 15px;
+
+        padding: 20px;
+    }
+
+
+    .join-room {
+        width: 100%;
+    }
+
+
+    #room {
+        flex: 1;
+
+        width: auto;
+    }
+
+
+    .room-layout {
+        display: flex;
+
+        flex-direction: column;
+    }
+
+
+    .video-section {
+        padding: 25px 18px 40px;
+    }
+
+
+    /*
+       Smaller player on phone.
+    */
+
+    #player,
+    iframe#player {
+        height: 300px !important;
+        min-height: 300px !important;
+    }
+
+
+    .video-actions {
+        flex-wrap: wrap;
+    }
+
+
+    #video-url {
+        flex-basis: 100%;
+    }
+
+
+    .chat-sidebar {
+        width: 100%;
+
+        height: 500px;
+
+        position: static;
+
+        border-left: none;
+
+        border-top: 2px solid var(--blue);
+    }
+}

@@ -36,8 +36,8 @@ function loadVideo(id) {
 // ---------- YouTube player ----------
 window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player("player", {
-        height: "390",
-        width: "640",
+        height: "100%",
+        width: "600",
         events: {
             onReady: () => {
                 if (pendingVideo !== undefined) loadVideo(pendingVideo);
