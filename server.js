@@ -67,6 +67,12 @@ io.on("connection", (socket) => {
     }
     broadcastState(data.room);
   });
+socket.on("broadcast-video", (data) =>{
+  const room = getRoom(data.room)
+  room.current = data.video;
+  io.to(data.room).emit("play-video",room.current)
+  broadcastState(data.room)
+})
 
   // skip to the next video if someone clicked the button
   socket.on("next-video", (data) => {
@@ -76,7 +82,6 @@ io.on("connection", (socket) => {
     playNext(data.room);
   });
 });
-
 
 
 server.listen(port, hostname, () => {
