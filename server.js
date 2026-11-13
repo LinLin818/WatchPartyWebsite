@@ -70,15 +70,22 @@ io.on("connection", (socket) => {
   //Enable to the video up//
 socket.on("broadcast-video", (data) =>{
   const room = getRoom(data.room)
+
+  if (room.current) return;
+
   room.current = data.video;
+  
   io.to(data.room).emit("play-video",room.current)
   broadcastState(data.room)
 })
 
   // skip to the next video if someone clicked the button
   socket.on("next-video", (data) => {
+   
+
     if (!data || !data.room) return;
     const room = getRoom(data.room);
+    
     if (data.from && data.from !== room.current) return;
     playNext(data.room);
   });

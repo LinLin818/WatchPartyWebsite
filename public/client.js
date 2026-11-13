@@ -12,14 +12,13 @@ function extractVideoId(input) {
     try {
         const url = new URL(input);
 
-        if (url.hostname.includes("youtu.be")) {
-            return url.pathname.slice(1);
-        }
+        if (input.includes("v=")) {
+        return input.split("v=")[1].split("&")[0];
+    }
 
-        if (url.pathname.includes("/shorts/")) {
-            return url.pathname.split("/shorts/")[1];
-        }
-
+    if (input.includes("youtu.be/")) {
+        return input.split("youtu.be/")[1].split("?")[0];
+    }
     } catch (e) {
         // Not a URL
     }
@@ -33,11 +32,11 @@ function extractVideoId(input) {
 
 function loadVideo(id) {
     currentVideo = id;
-    /*
+    
     if (!player || !player.loadVideoById) {
         pendingVideo = id; // player not ready yet
         return;
-    }*/
+    }
     if (id) {
         player.loadVideoById(id);
     } else {
@@ -50,6 +49,9 @@ window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player("player", {
         height: "100%",
         width: "600",
+        playerVars: {
+            autoplay: 1
+        },
         events: {
             onReady: () => {
                 if (pendingVideo !== undefined) loadVideo(pendingVideo);
