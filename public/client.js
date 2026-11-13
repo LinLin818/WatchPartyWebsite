@@ -5,6 +5,8 @@ let currentVideo = null;   // YouTube video ID that is playing now
 let player = null;         // YouTube player instance
 let pendingVideo;          // video to load once the player is ready
 
+let applyingRemoteSync = false;
+
 // ---------- Helpers ----------
 function extractVideoId(input) {
     input = input.trim();
@@ -60,7 +62,31 @@ window.onYouTubeIframeAPIReady = () => {
                 // Video finished -> ask the server for the next one
                 if (e.data === YT.PlayerState.ENDED && currentVideo) {
                     socket.emit("next-video", { room: currentRoom, from: currentVideo });
+                    return;
                 }
+                //Don't resend changes from another user
+                if (applyingRemoteSync) return;
+
+                //User pressed play
+                if (e.data === YT.PlayerState.PLAYING){
+                    socket.emit("video-sync", {
+                        room: currentRoom,
+                        action: "play",
+                        time: player.getCurrentTime()
+
+                });
+                }
+
+                //User pressed pauge 
+                   if (e.data === YT.PlayerState.PAUSED){
+                    socket.emit("video-sync", {
+                        room: currentRoom,
+                        action: "pause",
+                        time: player.getCurrentTime()
+
+                });
+                }
+
             }
         }
     });
@@ -123,6 +149,35 @@ socket.on("play-video", (id) => {
     loadVideo(id);
 });
 
+
+socket.on("video-sync", ({ action, time }) => {
+    if (!player || !player.seekTo) return;
+
+    applyingRemoteSync = true;
+
+    // Sync timestamp
+    if (typeof time === "number") {
+        const localTime = player.getCurrentTime();
+
+        if (Math.abs(localTime - time) > 0.5) {
+            player.seekTo(time, true);
+        }
+    }
+
+    // Sync play/pause
+    if (action === "play") {
+        player.playVideo();
+    }
+
+    if (action === "pause") {
+        player.pauseVideo();
+    }
+
+    setTimeout(() => {
+        applyingRemoteSync = false;
+    }, 500);
+});
+
 socket.on("queue-updated", ({ current, queue }) => {
     document.getElementById("now-playing").textContent =
         current ? "Now playing: " + current : "Nothing playing";
@@ -134,4 +189,40 @@ socket.on("queue-updated", ({ current, queue }) => {
         li.textContent = id;
         list.appendChild(li);
     });
+});
+
+// Existing user sends their current state to the new user
+socket.on("get-sync", (newUserId) => {
+    if (!player || !currentVideo) return;
+
+    socket.emit("send-sync", {
+        to: newUserId,
+        video: currentVideo,
+        seconds: player.getCurrentTime(),
+        isPlaying: player.getPlayerState() === YT.PlayerState.PLAYING
+    });
+});
+
+// New user receives the existing user's state
+socket.on("sync-time", ({ video, seconds, isPlaying }) => {
+    if (!player) return;
+
+    currentVideo = video;
+    applyingRemoteSync = true;
+
+    player.loadVideoById({
+        videoId: video,
+        startSeconds: seconds
+    });
+
+    if (!isPlaying) {
+        setTimeout(() => {
+            player.pauseVideo();
+            applyingRemoteSync = false;
+        }, 500);
+    } else {
+        setTimeout(() => {
+            applyingRemoteSync = false;
+        }, 500);
+    }
 });

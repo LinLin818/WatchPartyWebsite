@@ -2,6 +2,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 
+
 const app = express();
 const server = http.createServer(app);
 
@@ -40,15 +41,45 @@ function playNext(name) {
 io.on("connection", (socket) => {
   console.log("socket server on ong");
 
-  socket.on("join-room", (roomName) => {
+  socket.on("join-room", async (roomName) => {
+    const existingUsers = await io.in(roomName).fetchSockets();
     socket.join(roomName);
     console.log(socket.id + " joined " + roomName);
+ 
 
     // Check the current state of the room. If the queue is not empty play the video
     const state = getRoom(roomName);
     socket.emit("queue-updated", { current: state.current, queue: state.queue });
-    if (state.current) socket.emit("play-video", state.current);
+    //Recording time stamps + syncing
+    if (state.current){
+      socket.emit("play-video", state.current);
+
+      if(existingUsers.length > 0){
+        //gets video timestamp from the user already in the room
+        io.to(existingUsers[0].id).emit("get-sync", socket.id);
+      } else {
+        // or just play from start
+        socket.emit("play-video", state.current);
+      }
+    }
   });
+
+  // use exisitng user timestamp to catch new user up to speed
+  socket.on("send-sync", (data) =>{
+    io.to(data.to).emit("sync-time", {
+      video: data.video,
+      seconds: data.seconds,
+      isPlaying: data.isPlaying
+    });
+  });
+
+  // pass play/pause straight to everyone else in the room
+ socket.on("video-sync", (data) => {
+    socket.to(data.room).emit("video-sync", {
+        action: data.action,
+        time: data.time
+    });
+});
 
   socket.on("send-message", (data) => {
     io.to(data.room).emit("receive-message", data.message);
@@ -67,6 +98,7 @@ io.on("connection", (socket) => {
     }
     broadcastState(data.room);
   });
+
   //Enable to the video up//
 socket.on("broadcast-video", (data) =>{
   const room = getRoom(data.room)
