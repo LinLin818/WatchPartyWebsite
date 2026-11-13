@@ -67,6 +67,7 @@ io.on("connection", (socket) => {
     }
     broadcastState(data.room);
   });
+  //Enable to the video up//
 socket.on("broadcast-video", (data) =>{
   const room = getRoom(data.room)
   room.current = data.video;

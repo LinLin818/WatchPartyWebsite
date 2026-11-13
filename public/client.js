@@ -8,24 +8,36 @@ let pendingVideo;          // video to load once the player is ready
 // ---------- Helpers ----------
 function extractVideoId(input) {
     input = input.trim();
+
     try {
         const url = new URL(input);
-        if (url.hostname.includes("youtu.be")) return url.pathname.slice(1);
-        if (url.searchParams.get("v")) return url.searchParams.get("v");
-        const m = url.pathname.match(/\/(embed|shorts)\/([\w-]{11})/);
-        if (m) return m[2];
+
+        if (url.hostname.includes("youtu.be")) {
+            return url.pathname.slice(1);
+        }
+
+        if (url.pathname.includes("/shorts/")) {
+            return url.pathname.split("/shorts/")[1];
+        }
+
     } catch (e) {
-        // not a URL, fall through
+        // Not a URL
     }
-    return /^[\w-]{11}$/.test(input) ? input : null;
+
+    if (input.length === 11) {
+        return input;
+    }
+
+    return null;
 }
 
 function loadVideo(id) {
     currentVideo = id;
+    /*
     if (!player || !player.loadVideoById) {
         pendingVideo = id; // player not ready yet
         return;
-    }
+    }*/
     if (id) {
         player.loadVideoById(id);
     } else {
