@@ -38,6 +38,20 @@ function playNext(name) {
   broadcastState(name);
 }
 
+//getting a title from youtube url
+async function youtubeTitleVideo(videoUrl){
+  const oembedUrl =`https://youtube.com{encodeURIComponent(videoUrl)}&format=json`;
+  try{
+    const response = await fetch(oembedUrl)
+    // Checks if the video is valid or not
+    if(!response.ok){
+      throw new Error('Invalid or private video');
+    }
+  }catch(error){
+    console.log("Could not fetch the Youtube title: ", error)
+  }
+
+}
 io.on("connection", (socket) => {
   console.log("socket server on ong");
 
@@ -95,7 +109,7 @@ io.on("connection", (socket) => {
       io.to(data.room).emit("play-video", room.current);
     } else {
       room.queue.push(data.video);
-    }
+    } 
     broadcastState(data.room);
   });
 
