@@ -31,7 +31,10 @@ function broadcastState(name) {
 
 function playNext(name) {
   const room = getRoom(name);
-  room.current = room.queue.shift() || null;
+  const next = room.queue.shift();
+  room.current = next
+        ? (typeof next === "string" ? next : next.id)
+        : null;
   if (room.current) {
     io.to(name).emit("play-video", room.current);
   }
@@ -39,16 +42,17 @@ function playNext(name) {
 }
 
 //getting a title from youtube url
-async function youtubeTitleVideo(videoUrl){
-  const oembedUrl =`https://youtube.com{encodeURIComponent(videoUrl)}&format=json`;
+async function youtubeTitleVideo(videoId){
+  const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(videoUrl)}&format=json`;
   try{
     const response = await fetch(oembedUrl)
     // Checks if the video is valid or not
-    if(!response.ok){
-      throw new Error('Invalid or private video');
-    }
+    if(!response.ok) return videoId;
+    const data = await response.json();
+    return data.title;
   }catch(error){
-    console.log("Could not fetch the Youtube title: ", error)
+    return videoId;
   }
 
 }
@@ -100,15 +104,18 @@ io.on("connection", (socket) => {
   });
 
   // Add a video to the end of the queue. data = { room, video }
-  socket.on("add-to-queue", (data) => {
+  socket.on("add-to-queue", async(data) => {
     if (!data || !data.room || !data.video) return;
     const room = getRoom(data.room);
+    const title = await youtubeTitleVideo(data.video);
 
     if (!room.current) {
       room.current = data.video;
-      io.to(data.room).emit("play-video", room.current);
+      io.to(data.room).emit("play-video", data.video);
     } else {
-      room.queue.push(data.video);
+      room.queue.push({ 
+            id: data.video,
+            title: title});
     } 
     broadcastState(data.room);
   });

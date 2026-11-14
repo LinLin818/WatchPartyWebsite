@@ -205,14 +205,15 @@ socket.on("video-sync", ({ action, time }) => {
 });
 
 socket.on("queue-updated", ({ current, queue }) => {
-    document.getElementById("now-playing").textContent =
-        current ? "Now playing: " +(title||current) : "Nothing playing";
 
     const list = document.getElementById("queue");
     list.innerHTML = "";
-    queue.forEach((id) => {
+    queue.forEach((video) => {
         const li = document.createElement("li");
-        li.textContent = id;
+        li.textContent = typeof video === "string"
+            ? video
+            : video.title;
+
         list.appendChild(li);
     });
 });
