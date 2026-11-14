@@ -1,4 +1,5 @@
 const socket = io();
+const titleNameStorage = {};
 
 let currentRoom = "";
 let currentVideo = null;   // YouTube video ID that is playing now
@@ -45,7 +46,21 @@ function loadVideo(id) {
         player.stopVideo();
     }
 }
+// fetching video name
+async function fetchVideoTitle(id){
+    if(!id)return '';
+    if(titleNameStorage[id]) return titleNameStorage[id];
+    try{
+        const url = `https://youtube.com{id}&format=json`;
+        const res = await fetch(url);
+        const data = await res.json();
+        titleNameStorage[id] = data.title;
+        return data.title;
 
+    }catch(e){
+        return id;  // Fallback to video ID if fetch fails
+    }
+}
 // ---------- YouTube player ----------
 window.onYouTubeIframeAPIReady = () => {
     player = new YT.Player("player", {
@@ -75,7 +90,18 @@ window.onYouTubeIframeAPIReady = () => {
                         time: player.getCurrentTime()
 
                 });
+                if(e.data === YT.PlayerState.PLAYING && currentVideo){
+                    const title = player.getVideoData?.()?.title;
+                    if(title){
+                         titleNameStorage[currentVideo] = title;
+                         document.getElementById('now-playing').textContent = "Now playing: " + title;
+                    }
+
                 }
+                
+                }
+                if (applyingRemoteSync) return;
+
 
                 //User pressed pauge 
                    if (e.data === YT.PlayerState.PAUSED){
@@ -180,7 +206,7 @@ socket.on("video-sync", ({ action, time }) => {
 
 socket.on("queue-updated", ({ current, queue }) => {
     document.getElementById("now-playing").textContent =
-        current ? "Now playing: " + current : "Nothing playing";
+        current ? "Now playing: " +(title||current) : "Nothing playing";
 
     const list = document.getElementById("queue");
     list.innerHTML = "";
