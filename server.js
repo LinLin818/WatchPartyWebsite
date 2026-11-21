@@ -1,7 +1,11 @@
 const express = require("express");
-const session = require("express-session");
+require("dotenv").config();  
+const http = require("http");
+const crypto = require("crypto");
+const cookieParser = require("cookie-parser");
 const http = require("http");
 const { Server } = require("socket.io");
+const cookieParser = require("cookie-parser");
 
 
 const app = express();
@@ -11,9 +15,16 @@ const io = new Server(server);
 const port = 3000;
 const hostname = "localhost";
 
+// ---------- Temporary usernames ----------
+const COOKIE_NAME = "username";
+const NAME_TTL_MS = 24 * 60 * 60 * 1000; 
+const cookieSecret = process.env.COOKIE_SESSION || crypto.randomBytes(32).toString("hex");
 app.use(express.static("public"));
+const cookieMiddleware = cookieParser(process.env.COOKIE_SESSION)
 const rooms = {};
+function assignNames(req, res, next){
 
+}
 function getRoom(name) {
   if (!rooms[name]) {
     rooms[name] = { queue: [], current: null };
