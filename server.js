@@ -21,6 +21,43 @@ const NAME_TTL_MS = 24 * 60 * 60 * 1000;
 const cookieSecret = process.env.COOKIE_SESSION || crypto.randomBytes(32).toString("hex");
 app.use(express.static("public"));
 const cookieMiddleware = cookieParser(process.env.COOKIE_SESSION)
+
+app.use(cookieMiddleware);
+app.use(assignNames);  
+const ADJECTIVES = [
+  "Happy", "Sleepy", "Brave", "Clever", "Sneaky", "Fuzzy", "Swift", "Quiet",
+  "Lucky", "Cosmic", "Spicy", "Chill", "Bouncy", "Mighty", "Witty", "Shiny",
+];
+const ANIMALS = [
+  "Panda", "Otter", "Fox", "Koala", "Falcon", "Tiger", "Penguin", "Llama",
+  "Badger", "Dolphin", "Raccoon", "Owl", "Gecko", "Moose", "Hedgehog", "Wolf",
+];
+
+function generateUsername() {
+  const adj = ADJECTIVES[crypto.randomInt(ADJECTIVES.length)];
+  const animal = ANIMALS[crypto.randomInt(ANIMALS.length)];
+  const num = crypto.randomInt(100, 1000); // 3 digits
+  return `${adj}${animal}${num}`;
+}
+function setUsernameCookie(res, name) {
+  res.cookie(COOKIE_NAME, name, {
+    signed: true,     
+    httpOnly: true, 
+    sameSite: "lax",
+    maxAge: NAME_TTL_MS,
+  });
+}
+function assignNames(req, res, next) {
+  let name = req.signedCookies[COOKIE_NAME];
+  if (!name) {
+    name = generateUsername();
+    setUsernameCookie(res, name);
+  }
+  req.username = name;
+  next();
+}
+
+
 const rooms = {};
 function assignNames(req, res, next){
 
