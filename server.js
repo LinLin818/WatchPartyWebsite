@@ -1,15 +1,13 @@
 const express = require("express");
 require("dotenv").config();  
 const http = require("http");
+const path = require("path");
 const crypto = require("crypto");
-
-const { Server } = require("socket.io");
 const cookieParser = require("cookie-parser");
-
+const { Server } = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-
 const io = new Server(server);
 const port = 3000;
 const hostname = "localhost";
@@ -18,7 +16,6 @@ const hostname = "localhost";
 const COOKIE_NAME = "username";
 const NAME_TTL_MS = 24 * 60 * 60 * 1000; 
 const cookieSecret = process.env.COOKIE_SESSION || crypto.randomBytes(32).toString("hex");
-
 const cookieMiddleware = cookieParser(cookieSecret);
 
  
@@ -54,22 +51,23 @@ function assignNames(req, res, next) {
   req.username = name;
   next();
 }
+
+
 app.use(express.json())
 app.use(cookieMiddleware);
 app.use(assignNames); 
 app.use(express.static("public"));
 
 
-const rooms = {};
-function getRoom(name) {
-  if (!rooms[name]) {
-    rooms[name] = { queue: [], current: null };
-  }
-  return rooms[name];
-}
+app.get("/room/:roomId", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 app.get("/api/username", (req, res) => {
   res.json({ username: req.username });
 });
+
+
 
 app.post("/api/username/regenerate", (req, res) => {
   const oldName = req.username;
@@ -93,6 +91,7 @@ app.post("/api/username/regenerate", (req, res) => {
  res.json({ username: newName });
 });
 
+
 io.use((socket, next) => {
   cookieMiddleware(socket.request, {}, () => {
     const name = socket.request.signedCookies && socket.request.signedCookies[COOKIE_NAME];
@@ -100,6 +99,28 @@ io.use((socket, next) => {
     next();
   });
 });
+
+
+const rooms = {};
+
+//ranfom link
+function generateRoomID(length = 10){
+  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let roomID = "";
+
+  for(let i = 0; i < length; i++){
+    roomID += characters[crypto.randomInt(characters.length)];
+  }
+
+  return roomID;
+}
+
+function getRoom(name) {
+  return rooms[name] || null;
+}
+
+
+
 
 
 //Controll the state of broadcasting so everyone is synced together
@@ -141,17 +162,23 @@ async function youtubeTitleVideo(videoId){
 io.on("connection", (socket) => {
   console.log("socket server on ong");
 
-  socket.on("join-room", async (roomName) => {
-    const existingUsers = await io.in(roomName).fetchSockets();
-    socket.join(roomName);
-    console.log(socket.id + " joined " + roomName);
- 
-    io.to(roomName).emit("receive-message", {
-      user: "System",
-      message: `${socket.data.username} joined the room`,
-    });
+  socket.on("join-room", async (roomName, callback) => {
     // Check the current state of the room. If the queue is not empty play the video
     const state = getRoom(roomName);
+    
+    if (!state) {
+      if (callback) callback({ success: false });
+    return;
+  }
+    const existingUsers = await io.in(roomName).fetchSockets();
+    socket.join(roomName);
+    socket.data.roomID = roomName;
+    console.log(socket.id + " joined " + roomName);
+
+  if (callback) {
+    callback({ success: true });
+  }
+
     socket.emit("queue-updated", { current: state.current, queue: state.queue });
     //Recording time stamps + syncing
     if (state.current){
@@ -227,6 +254,39 @@ socket.on("broadcast-video", (data) =>{
     if (data.from && data.from !== room.current) return;
     playNext(data.room);
   });
+
+  socket.on("create-room", (callback) => {
+    let roomID;
+
+    do {
+      roomID = generateRoomID();
+    } while (rooms[roomID]);
+
+    rooms[roomID] = {
+      queue: [],
+      current: null
+    };
+
+    socket.join(roomID);
+    socket.data.roomID = roomID;
+
+    console.log("created room:" + roomID);
+    callback({success:true, roomID});
+  })
+  
+socket.on("disconnecting", async () => {
+    const roomID = socket.data.roomID;
+
+    if (!roomID || !rooms[roomID]) return;
+
+    const sockets = await io.in(roomID).fetchSockets();
+
+    if (sockets.length <= 1) {
+        delete rooms[roomID];
+        console.log("Deleted empty room:", roomID);
+    }
+});
+
 });
 
 
