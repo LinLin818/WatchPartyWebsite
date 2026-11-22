@@ -119,18 +119,95 @@ window.onYouTubeIframeAPIReady = () => {
 };
 
 // ---------- Rooms & chat ----------
-document.getElementById("join").onclick = () => {
-    const room = document.getElementById("room").value.trim();
-    if (!room) return;
-    currentRoom = room;
-    socket.emit("join-room", room);
 
-    // Joined: unlock chat
+//unlock chat
+function enableRoom() {
     const messageBox = document.getElementById("message");
+
     messageBox.disabled = false;
     messageBox.placeholder = "Enter message";
+
     document.getElementById("send").disabled = false;
+}
+
+// Create a new room
+document.getElementById("create-room").onclick = () => {
+    socket.emit("create-room", (response) => {
+
+        if (!response || !response.success) {
+            alert("Could not create room");
+            return;
+        }
+        
+        currentRoom = response.roomID;
+
+        // Update the URL
+        history.pushState({}, "", `/room/${currentRoom}`);
+
+        document.getElementById("room-info").textContent = "Room ID: " + currentRoom;
+        enableRoom();
+
+        console.log("Created room:", currentRoom);
+    });
 };
+
+// Join an existing room using a room ID
+document.getElementById("join-room").onclick = () => {
+    const roomID = document.getElementById("room-id").value.trim();
+    
+    if (!roomID) {
+        return alert("Please enter a room ID");
+    }
+    
+    socket.emit("join-room", roomID, (response) => {
+        if (!response || !response.success) {
+            return alert("Room does not exist!");
+        }
+
+        
+        currentRoom = roomID;
+
+        // Update URL
+        history.pushState({}, "", `/room/${currentRoom}`);
+
+        document.getElementById("room-info").textContent = "Room ID: " + currentRoom;
+         enableRoom();
+        console.log("Successfully joined room:", currentRoom);
+    });
+};
+
+
+    // Automatically join room if URL contains a room ID
+const pathParts = window.location.pathname.split("/");
+const roomFromURL = pathParts[2];
+
+if (roomFromURL) {
+    
+    const joinRoomFromURL = () => {
+        
+        socket.emit("join-room", roomFromURL, (response) => {
+            
+            if (!response || !response.success) {
+                alert("Room does not exist!");
+                history.pushState({}, "", "/");
+                return;
+            }
+            
+            currentRoom = roomFromURL;
+
+            document.getElementById("room-info").textContent = "Room ID: " + currentRoom;
+            enableRoom();
+            console.log("Joined room:", currentRoom);
+        });
+
+    };
+
+    if (socket.connected) {
+        joinRoomFromURL();
+    } else {
+        socket.once("connect", joinRoomFromURL);
+    }
+}
 
 // Chat: send a text message to everyone in the room
 document.getElementById("send").onclick = () => {

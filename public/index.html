@@ -4,15 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Watch Party Website</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
     <header class="room-header">
     <div class="join-room">
-    <h2>Join a Room</h2>
-    <input id="room" placeholder="Enter room name">
-    <button id="join">Join Room</button>
+    <h2>Watch Party</h2>
+    <button id="create-room">Create Room</button>
+    <p id="room-info"></p>
+    
+    <button id="join-room">Join Room</button>
+    <input id="room-id" placeholder="Enter Room ID">
 </div>
 </header>
 
@@ -56,6 +59,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
-    <script src="client.js"></script>
+    <script src="/client.js"></script>
 </body>
 </html>
