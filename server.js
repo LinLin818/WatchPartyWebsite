@@ -68,6 +68,40 @@ function getRoom(name) {
   }
   return rooms[name];
 }
+app.get("/api/username", (req, res) => {
+  res.json({ username: req.username });
+});
+
+app.post("/api/username/regenerate", (req, res) => {
+  const oldName = req.username;
+  const newName = generateUsername();
+  setUsernameCookie(res, newName);
+
+  // Update the live socket too, so chat uses the new name right away
+  const socketId = req.body && req.body.socketId;
+  const s = socketId && io.sockets.sockets.get(socketId);
+  if (s && s.data.username === oldName) {
+    s.data.username = newName;
+    for (const room of s.rooms) {
+      if (room !== s.id) {
+        io.to(room).emit("receive-message", {
+          user: "System",
+          message: `${oldName} is now ${newName}`,
+        });
+      }
+    }
+  }
+ res.json({ username: newName });
+});
+
+io.use((socket, next) => {
+  cookieMiddleware(socket.request, {}, () => {
+    const name = socket.request.signedCookies && socket.request.signedCookies[COOKIE_NAME];
+    socket.data.username = name || generateUsername();
+    next();
+  });
+});
+
 
 //Controll the state of broadcasting so everyone is synced together
 function broadcastState(name) {
@@ -113,7 +147,10 @@ io.on("connection", (socket) => {
     socket.join(roomName);
     console.log(socket.id + " joined " + roomName);
  
-
+    io.to(roomName).emit("receive-message", {
+      user: "System",
+      message: `${socket.data.username} joined the room`,
+    });
     // Check the current state of the room. If the queue is not empty play the video
     const state = getRoom(roomName);
     socket.emit("queue-updated", { current: state.current, queue: state.queue });
