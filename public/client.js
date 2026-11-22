@@ -8,6 +8,36 @@ let pendingVideo;          // video to load once the player is ready
 
 let applyingRemoteSync = false;
 
+async function loadUsername() {
+    try {
+        const res = await fetch("/api/username");
+        const data = await res.json();
+        showUsername(data.username);
+    } catch (e) {
+        showUsername("Guest");
+    }
+}
+
+function showUsername(name) {
+    const el = document.getElementById("username");
+    if (el) el.textContent = name;
+}
+
+const newNameBtn = document.getElementById("new-name");
+if (newNameBtn) {
+    newNameBtn.onclick = async () => {
+        const res = await fetch("/api/username/regenerate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ socketId: socket.id }),
+        });
+        const data = await res.json();
+        showUsername(data.username);
+    };
+}
+
+loadUsername();
+
 // ---------- Helpers ----------
 function extractVideoId(input) {
     input = input.trim();
